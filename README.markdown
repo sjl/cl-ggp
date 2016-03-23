@@ -1,15 +1,17 @@
-The GGP Protocol looks approximately like this:
 
-    (START <MATCH ID> <ROLE> <GAME DESCRIPTION> <STARTCLOCK> <PLAYCLOCK>)
-    READY
+      ___  __          ___   ___  ____
+     / __)(  )   ___  / __) / __)(  _ \
+    ( (__ / (_/\(___)( (_ \( (_ \ ) __/
+     \___)\____/      \___/ \___/(__)
 
-    (PLAY <MATCH ID> <PRIOR MOVES>)
-    MOVE (explanation “...”) (taunt “...”)
+`cl-ggp` is a tiny framework for writing [GGP][] players in Common Lisp.
 
-    (STOP <MATCH ID> <PRIOR MOVES>)
-    DONE
+It handles the GGP protocol for you but *nothing else*.  In particular you'll
+need to bring your own logic system to parse the games.
 
-Undocumented, because lol:
+[GGP]: http://www.ggp.org/
 
-    (INFO)
-    ((NAME MYNAME) (STATUS ???) (SPECIES LOL))
+* **License:** MIT/X11
+* **Documentation:** <http://sjl.bitbucket.org/cl-ggp/>
+* **Code:** <http://bitbucket.org/sjl/cl-ggp/>
+* **Issues:** <http://bitbucket.org/sjl/cl-ggp/issues/>
