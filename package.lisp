@@ -23,7 +23,7 @@
   (:documentation
    "Symbol storage package.
 
-  The GGP-RULES package is used to hold all the symbols in the GDL game
+  The `GGP-RULES` package is used to hold all the symbols in the GDL game
   descriptions, as well as some special symbols in the GGP protocol.  It is
   cleared between game runs to avoid a buildup of garbage symbols (especially
   when GDL scrambling is turned on), though certain special symbols are allowed
