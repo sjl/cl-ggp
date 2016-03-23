@@ -7,7 +7,7 @@ apidoc = docs/03-reference.markdown
 # src/utils.lisp: src/make-utilities.lisp
 # 	cd src && sbcl --noinform --load make-utilities.lisp  --eval '(quit)'
 
-$(apidoc): $(sourcefiles) docs/api.lisp
+$(apidoc): $(sourcefiles) docs/api.lisp package.lisp
 	sbcl --noinform --load docs/api.lisp  --eval '(quit)'
 
 docs: docs/build/index.html

@@ -12,6 +12,8 @@ don't touch it.
 
 ## Package GGP
 
+The main GGP package.
+
 ### GGP-PLAYER (class)
 
 The base class for a GGP player.  Custom players should extend this.
@@ -31,6 +33,35 @@ The name of the player.
 * Reader: `PLAYER-PORT`
 
 The port the HTTP server should listen on.
+
+#### Slot MATCH-ROLES
+
+* Allocation: INSTANCE
+* Type: `(OR NULL LIST)`
+* Reader: `PLAYER-MATCH-ROLES`
+
+A list of the roles for the current match.  Feel free to read and use this if you like.  **Do not modify this.**
+
+#### Slot START-CLOCK
+
+* Allocation: INSTANCE
+* Type: `(OR NULL (INTEGER 1))`
+
+The start clock for the current game.  **Do not touch this.**  Use the `timeout` value passed to your methods instead.
+
+#### Slot PLAY-CLOCK
+
+* Allocation: INSTANCE
+* Type: `(OR NULL (INTEGER 1))`
+
+The play clock for the current game.  **Do not touch this.**  Use the `timeout` value passed to your methods instead.
+
+#### Slot MESSAGE-START
+
+* Allocation: INSTANCE
+* Type: `(OR NULL (INTEGER 0))`
+
+The (internal-real) timestamp of when the current GGP message was received.  **Do not touch this.**  Use the `timeout` value passed to your methods instead.
 
 #### Slot CURRENT-MATCH
 
@@ -57,24 +88,35 @@ Kill the HTTP server for the given player.
 
 ### PLAYER-SELECT-MOVE (generic function)
 
-    (PLAYER-SELECT-MOVE PLAYER)
+    (PLAYER-SELECT-MOVE PLAYER TIMEOUT)
 
 Called when it's time for the player to select a move to play.
 
   Must return a list/symbol of the GDL move to play.  Note that any symbols in
-  the move should be ones that are interned in the `GGP` package.  The author is
-  aware that this sucks and welcomes suggestions on how to make it less awful.
+  the move should be ones that are interned in the `GGP-RULES` package.  The
+  author is aware that this sucks and welcomes suggestions on how to make it
+  less awful.
+
+  `timeout` is the timestamp that the response to the server is due by, in
+  internal-real time units.  Basically: when `(get-internal-real-time)` returns
+  this number, your message better have reached the server.
 
   
 
 ### PLAYER-START-GAME (generic function)
 
-    (PLAYER-START-GAME PLAYER RULES ROLE START-CLOCK PLAY-CLOCK)
+    (PLAYER-START-GAME PLAYER RULES ROLE TIMEOUT)
 
 Called when the game is started.
 
   `rules` is a list of lists/symbols representing the GDL description of the
-  game.  Note that all symbols are interned in the `GGP` package.
+  game.  Note that all symbols are interned in the `GGP-RULES` package.
+
+  `role` is a symbol representing the role of the player in this game.
+
+  `timeout` is the timestamp that the response to the server is due by, in
+  internal-real time units.  Basically: when `(get-internal-real-time)` returns
+  this number, your message better have reached the server.
 
   
 
@@ -93,9 +135,10 @@ Called when the game is stopped.
 
     (PLAYER-UPDATE-GAME PLAYER MOVES)
 
-Called after all player have made their moves.
+Called after all players have made their moves.
 
-  `moves` will be a list of moves made by the players.
+  `moves` will be a list of `(role . move)` conses representing moves made by
+  each player last turn.
 
   
 
@@ -104,4 +147,18 @@ Called after all player have made their moves.
     (START-PLAYER PLAYER)
 
 Start the HTTP server for the given player.
+
+## Package GGP-RULES
+
+Symbol storage package.
+
+  The GGP-RULES package is used to hold all the symbols in the GDL game
+  descriptions, as well as some special symbols in the GGP protocol.  It is
+  cleared between game runs to avoid a buildup of garbage symbols (especially
+  when GDL scrambling is turned on), though certain special symbols are allowed
+  to survive the clearing.
+
+  This is ugly.  I'm sorry.  I'm open to suggestions on better ways to do this.
+
+  
 

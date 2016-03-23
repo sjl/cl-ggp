@@ -3,8 +3,10 @@
 (defclass simple-player (ggp:ggp-player)
   ())
 
-(defmethod ggp:player-select-move ((player simple-player))
-  'wait)
+(defmethod ggp:player-select-move ((player simple-player) timeout)
+  (format t "Selecting move (timeout ~A)~%" timeout)
+  'ggp-rules::wait)
+
 
 (defvar *player* nil)
 
@@ -16,4 +18,3 @@
 (ggp:start-player *player*)
 (ggp:kill-player *player*)
 
-(setf (slot-value *player* 'ggp::current-match) nil)

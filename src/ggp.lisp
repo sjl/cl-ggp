@@ -4,8 +4,29 @@
 (defparameter *debug*
   t)
 
-(defparameter *ggp-package*
-  (find-package :ggp))
+(defparameter *rules-package*
+  (find-package :ggp-rules))
+
+(defparameter *constant-rules-symbols*
+  '(nil
+    ggp-rules::info
+    ggp-rules::play
+    ggp-rules::stop
+    ggp-rules::start
+
+    ggp-rules::name
+    ggp-rules::status
+    ggp-rules::busy
+    ggp-rules::available
+    ggp-rules::species
+    ggp-rules::alien
+
+    ggp-rules::ready
+    ggp-rules::done
+    ggp-rules::what
+
+    ggp-rules::role
+    ))
 
 
 ;;;; GGP Player
@@ -22,6 +43,23 @@
      :reader player-port
      :type (integer 0)
      :documentation "The port the HTTP server should listen on.")
+   (match-roles
+     :type (or null list)
+     :initform nil
+     :reader player-match-roles
+     :documentation "A list of the roles for the current match.  Feel free to read and use this if you like.  **Do not modify this.**")
+   (start-clock
+     :type (or null (integer 1))
+     :initform nil
+     :documentation "The start clock for the current game.  **Do not touch this.**  Use the `timeout` value passed to your methods instead.")
+   (play-clock
+     :type (or null (integer 1))
+     :initform nil
+     :documentation "The play clock for the current game.  **Do not touch this.**  Use the `timeout` value passed to your methods instead.")
+   (message-start
+     :type (or null (integer 0))
+     :initform nil
+     :documentation "The (internal-real) timestamp of when the current GGP message was received.  **Do not touch this.**  Use the `timeout` value passed to your methods instead.")
    (current-match
      :initform nil
      :documentation "The ID of the current match the player is playing, or `nil` if it is waiting.  **Do not touch this.**")
@@ -30,27 +68,39 @@
   (:documentation "The base class for a GGP player.  Custom players should extend this."))
 
 
-(defgeneric player-start-game (player rules role start-clock play-clock)
+(defgeneric player-start-game (player rules role timeout)
   (:documentation "Called when the game is started.
 
   `rules` is a list of lists/symbols representing the GDL description of the
-  game.  Note that all symbols are interned in the `GGP` package.
+  game.  Note that all symbols are interned in the `GGP-RULES` package.
+
+  `role` is a symbol representing the role of the player in this game.
+
+  `timeout` is the timestamp that the response to the server is due by, in
+  internal-real time units.  Basically: when `(get-internal-real-time)` returns
+  this number, your message better have reached the server.
 
   "))
 
 (defgeneric player-update-game (player moves)
-  (:documentation "Called after all player have made their moves.
+  (:documentation "Called after all players have made their moves.
 
-  `moves` will be a list of moves made by the players.
+  `moves` will be a list of `(role . move)` conses representing moves made by
+  each player last turn.
 
   "))
 
-(defgeneric player-select-move (player)
+(defgeneric player-select-move (player timeout)
   (:documentation "Called when it's time for the player to select a move to play.
 
   Must return a list/symbol of the GDL move to play.  Note that any symbols in
-  the move should be ones that are interned in the `GGP` package.  The author is
-  aware that this sucks and welcomes suggestions on how to make it less awful.
+  the move should be ones that are interned in the `GGP-RULES` package.  The
+  author is aware that this sucks and welcomes suggestions on how to make it
+  less awful.
+
+  `timeout` is the timestamp that the response to the server is due by, in
+  internal-real time units.  Basically: when `(get-internal-real-time)` returns
+  this number, your message better have reached the server.
 
   "))
 
@@ -63,13 +113,13 @@
   "))
 
 
-(defmethod player-start-game ((player ggp-player) rules role start-clock play-clock)
+(defmethod player-start-game ((player ggp-player) rules role timeout)
   nil)
 
 (defmethod player-update-game ((player ggp-player) moves)
   nil)
 
-(defmethod player-select-move ((player ggp-player))
+(defmethod player-select-move ((player ggp-player) timeout)
   (error "Required method player-select-move is not implemented for ~A" player))
 
 (defmethod player-stop-game ((player ggp-player))
@@ -80,12 +130,34 @@
 (defun safe-read-from-string (s)
   ;; what could go wrong
   (let ((*read-eval* nil)
-        (*package* *ggp-package*))
+        (*package* *rules-package*))
     (read-from-string s)))
 
 (defun render-to-string (e)
-  (let ((*package* *ggp-package*))
+  (let ((*package* *rules-package*))
     (format nil "~A" e)))
+
+(defun calculate-timeout (player clock)
+  "Calculate the timestamp (in internal units) that we must return by."
+  (+ (slot-value player 'message-start)
+     (* clock internal-time-units-per-second)))
+
+(defun clear-rules-package ()
+  (do-symbols (symbol *rules-package*) ; JESUS TAKE THE WHEEL
+    (when (not (member symbol *constant-rules-symbols*))
+      (unintern symbol *rules-package*))))
+
+(defun find-roles (rules)
+  (mapcar #'second
+          (remove-if-not #'(lambda (rule)
+                            (and (consp rule)
+                                 (eql 'ggp-rules::role (first rule))))
+                         rules)))
+
+(defun zip-moves (player moves)
+  (mapcar #'cons ; lol ggp
+          (slot-value player 'match-roles)
+          moves))
 
 
 ;;;; Clack Horseshit
@@ -109,70 +181,83 @@
 
 ;;;; GGP Protocol
 (defun handle-info (player)
-  `((name ,(slot-value player 'name))
-    (status ,(if (slot-value player 'current-match) 'busy 'available))
-    (species alien)))
+  `((ggp-rules::name ,(slot-value player 'name))
+    (ggp-rules::status ,(if (slot-value player 'current-match)
+                          'ggp-rules::busy
+                          'ggp-rules::available))
+    (ggp-rules::species ggp-rules::alien)))
 
 (defun handle-start (player match-id role rules start-clock play-clock)
-  (declare (ignore play-clock))
   (setf (slot-value player 'current-match) match-id)
+  (setf (slot-value player 'start-clock) start-clock)
+  (setf (slot-value player 'play-clock) play-clock)
+  (setf (slot-value player 'match-roles) (find-roles rules))
   (l "Starting match ~S as ~S~%" match-id role)
-  (player-start-game player rules role start-clock play-clock)
-  'ready)
+  (player-start-game player rules role (calculate-timeout player start-clock))
+  'ggp-rules::ready)
 
 (defun handle-play (player match-id moves)
+  (declare (ignore match-id))
   (l "Handling play request with moves ~S~%" moves)
-  (player-update-game player moves)
-  (player-select-move player))
+  (player-update-game player (zip-moves player moves))
+  (player-select-move player
+                      (calculate-timeout player (slot-value player 'play-clock))))
 
 (defun handle-stop (player match-id moves)
   (l "Handling stop request for ~S~%" match-id)
+  (player-update-game player (zip-moves player moves))
   (player-stop-game player)
   (setf (slot-value player 'current-match) nil)
-  'done)
+  (setf (slot-value player 'match-roles) nil)
+  (clear-rules-package)
+  'ggp-rules::done)
 
 
 (defun route (player request)
   "Route the request to the appropriate player function."
   (match request
-    (`(info)
+    (`(ggp-rules::info)
      (handle-info player))
 
-    (`(play ,match-id ,moves)
+    (`(ggp-rules::play ,match-id ,moves)
      (handle-play player match-id moves))
 
-    (`(stop ,match-id ,moves)
+    (`(ggp-rules::stop ,match-id ,moves)
      (handle-stop player match-id moves))
 
-    (`(start ,match-id ,role ,rules ,start-clock ,play-clock)
+    (`(ggp-rules::start ,match-id ,role ,rules ,start-clock ,play-clock)
      (handle-start player match-id role rules start-clock play-clock))
 
     (unknown-request
       (l "UNKNOWN REQUEST: ~S~%~%" unknown-request)
-      'what)))
+      'ggp-rules::what)))
 
 
 ;;;; Boilerplate
 (defun should-log-p (request)
   (match request
-    (`(info) nil)
+    (`(ggp-rules::info) nil)
     (_ t)))
 
 (defun app (player env)
-  (let* ((body (get-body env))
-         (request (safe-read-from-string body))
-         (should-log (should-log-p request)))
-    (when should-log
-      (l "~%~%Got a request ====================================~%")
-      (l "~S~%" request)
-      (l "==================================================~%"))
-    (let* ((response (route player request))
-           (rendered-response (render-to-string response)))
-      (when should-log
-        (l "==================================================~%")
-        (l "Responding with:~%~A~%" rendered-response)
-        (l "==================================================~%"))
-      (resp rendered-response))))
+  (setf (slot-value player 'message-start) (get-internal-real-time))
+  (unwind-protect
+      (let* ((body (get-body env))
+             (request (safe-read-from-string body))
+             (should-log (should-log-p request)))
+        (when should-log
+          (l "~%~%Got a request ====================================~%")
+          (l "~S~%" body)
+          (l "~A~%" (render-to-string request))
+          (l "==================================================~%"))
+        (let* ((response (route player request))
+               (rendered-response (render-to-string response)))
+          (when should-log
+            (l "==================================================~%")
+            (l "Responding with:~%~A~%" rendered-response)
+            (l "==================================================~%"))
+          (resp rendered-response)))
+    (setf (slot-value player 'message-start) nil)))
 
 
 ;;;; Spinup/spindown
