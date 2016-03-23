@@ -1,6 +1,8 @@
 (let ((*standard-output* (make-broadcast-stream)))
   (ql:quickload "docparser"))
 
+(declaim (optimize (debug 3))) ; dammit sbcl
+
 (defparameter *index*
   (docparser:parse :cl-ggp))
 
@@ -38,10 +40,12 @@ is replaced with replacement."
 
 ;;;; Documentation Utils
 (defun get-doc (package-name symbol-name)
-  (elt (docparser:query *index*
-                        :package-name package-name
-                        :symbol-name symbol-name)
-       0))
+  (let ((results (docparser:query *index*
+                                  :package-name package-name
+                                  :symbol-name symbol-name)))
+    (when (> (length results) 0)
+      (elt results 0))))
+
 (defun get-package-doc (package-name)
   ;; good god, lemon
   (docparser::find-package-index *index* package-name))
@@ -75,6 +79,26 @@ is replaced with replacement."
 
 (defgeneric render-documentation (node symbol-name))
 
+(defun render-class-slot (node)
+  (let ((name (docparser:node-name node))
+        (type (docparser:slot-type node))
+        (readers (docparser:slot-readers node))
+        (writers (docparser:slot-writers node))
+        (accessors (docparser:slot-accessors node)))
+    (format t "#### Slot ~A~%~%" name )
+    (format t "* Allocation: ~A~%" (docparser:slot-allocation node))
+    (when type (format t "* Type: `~A`~%" type))
+    (when readers (format t "* Reader~p: ~{`~A`~^, ~}~%" (length readers) readers))
+    (when writers (format t "* Writer~p: ~{`~A`~^, ~}~%" (length writers) writers))
+    (when accessors (format t "* Accessor~p: ~{`~A`~^, ~}~%" (length accessors) accessors))
+    (format t "~%")
+    (render-docstring node)))
+
+
+(defmethod render-documentation ((node docparser:class-node) symbol-name)
+  (render-symbol-header symbol-name " (class)")
+  (render-docstring node)
+  (mapc #'render-class-slot (docparser:record-slots node)))
 
 (defmethod render-documentation ((node docparser:documentation-node) symbol-name)
   (render-symbol-header symbol-name "")
@@ -90,6 +114,11 @@ is replaced with replacement."
   (render-lambda-list node)
   (render-docstring node))
 
+(defmethod render-documentation ((node docparser:generic-function-node) symbol-name)
+  (render-symbol-header symbol-name " (generic function)")
+  (render-lambda-list node)
+  (render-docstring node))
+
 (defmethod render-documentation ((node docparser:macro-node) symbol-name)
   (render-symbol-header symbol-name " (macro)")
   (render-lambda-list node)
@@ -100,7 +129,7 @@ is replaced with replacement."
 (defun document-symbol (package-name symbol)
   (let* ((symbol-name (symbol-name symbol))
          (doc-node (get-doc package-name symbol-name)))
-    (render-documentation doc-node symbol-name)))
+    (when doc-node (render-documentation doc-node symbol-name))))
 
 (defun document-package (package-name)
   (render-package-header package-name)

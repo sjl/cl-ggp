@@ -10,15 +10,57 @@
 
 ;;;; GGP Player
 (defclass ggp-player ()
-  ((name :initarg :name :initform "CL-GGP" :reader player-name)
-   (port :initarg :port :initform 9999 :reader player-port)
-   (current-match :initform nil)
-   (server)))
+  ((name
+     :initarg :name
+     :initform "CL-GGP"
+     :reader player-name
+     :type string
+     :documentation "The name of the player.")
+   (port
+     :initarg :port
+     :initform 9999
+     :reader player-port
+     :type (integer 0)
+     :documentation "The port the HTTP server should listen on.")
+   (current-match
+     :initform nil
+     :documentation "The ID of the current match the player is playing, or `nil` if it is waiting.  **Do not touch this.**")
+   (server
+     :documentation "The Clack server object of the player.  **Do not touch this.**  Use `start-player` and `kill-player` to start/stop the server safely."))
+  (:documentation "The base class for a GGP player.  Custom players should extend this."))
 
-(defgeneric player-start-game (player rules role start-clock play-clock))
-(defgeneric player-update-game (player moves))
-(defgeneric player-select-move (player))
-(defgeneric player-stop-game (player))
+
+(defgeneric player-start-game (player rules role start-clock play-clock)
+  (:documentation "Called when the game is started.
+
+  `rules` is a list of lists/symbols representing the GDL description of the
+  game.  Note that all symbols are interned in the `GGP` package.
+
+  "))
+
+(defgeneric player-update-game (player moves)
+  (:documentation "Called after all player have made their moves.
+
+  `moves` will be a list of moves made by the players.
+
+  "))
+
+(defgeneric player-select-move (player)
+  (:documentation "Called when it's time for the player to select a move to play.
+
+  Must return a list/symbol of the GDL move to play.  Note that any symbols in
+  the move should be ones that are interned in the `GGP` package.  The author is
+  aware that this sucks and welcomes suggestions on how to make it less awful.
+
+  "))
+
+(defgeneric player-stop-game (player)
+  (:documentation "Called when the game is stopped.
+
+  This is a good place to do any teardown stuff your player might need, or maybe
+  to suggest a GC to your Lisp implementation.
+
+  "))
 
 
 (defmethod player-start-game ((player ggp-player) rules role start-clock play-clock)
@@ -109,12 +151,13 @@
       (l "UNKNOWN REQUEST: ~S~%~%" unknown-request)
       'what)))
 
+
+;;;; Boilerplate
 (defun should-log-p (request)
   (match request
     (`(info) nil)
     (_ t)))
 
-;;;; Boilerplate
 (defun app (player env)
   (let* ((body (get-body env))
          (request (safe-read-from-string body))
@@ -134,6 +177,7 @@
 
 ;;;; Spinup/spindown
 (defun start-player (player)
+  "Start the HTTP server for the given player."
   (let* ((player-handler #'(lambda (env) (app player env)))
          (server (clack:clackup player-handler
                                 :port (player-port player))))
@@ -141,4 +185,10 @@
     player))
 
 (defun kill-player (player)
+  "Kill the HTTP server for the given player.
+
+  This will **not** be done gently.  No cleanup will be performed if the player
+  is in the middle of a game.  Be careful.
+
+  "
   (clack.handler:stop (slot-value player 'server)))

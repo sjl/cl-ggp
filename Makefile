@@ -12,7 +12,7 @@ $(apidoc): $(sourcefiles) docs/api.lisp
 
 docs: docs/build/index.html
 
-docs/build/index.html: $(docfiles) docs/title
+docs/build/index.html: $(docfiles) $(apidoc) docs/title
 	cd docs && ~/.virtualenvs/d/bin/d
 
 pubdocs: docs
