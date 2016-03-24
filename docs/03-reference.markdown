@@ -20,58 +20,67 @@ The base class for a GGP player.  Custom players should extend this.
 
 #### Slot NAME
 
-* Allocation: INSTANCE
+* Allocation: `:INSTANCE`
 * Type: `STRING`
+* Initarg: `:NAME`
+* Initform: `"CL-GGP"`
 * Reader: `PLAYER-NAME`
 
 The name of the player.
 
 #### Slot PORT
 
-* Allocation: INSTANCE
+* Allocation: `:INSTANCE`
 * Type: `(INTEGER 0)`
+* Initarg: `:PORT`
+* Initform: `9999`
 * Reader: `PLAYER-PORT`
 
 The port the HTTP server should listen on.
 
 #### Slot MATCH-ROLES
 
-* Allocation: INSTANCE
+* Allocation: `:INSTANCE`
 * Type: `(OR NULL LIST)`
+* Initform: `NIL`
 * Reader: `PLAYER-MATCH-ROLES`
 
 A list of the roles for the current match.  Feel free to read and use this if you like.  **Do not modify this.**
 
 #### Slot START-CLOCK
 
-* Allocation: INSTANCE
+* Allocation: `:INSTANCE`
 * Type: `(OR NULL (INTEGER 1))`
+* Initform: `NIL`
 
 The start clock for the current game.  **Do not touch this.**  Use the `timeout` value passed to your methods instead.
 
 #### Slot PLAY-CLOCK
 
-* Allocation: INSTANCE
+* Allocation: `:INSTANCE`
 * Type: `(OR NULL (INTEGER 1))`
+* Initform: `NIL`
 
 The play clock for the current game.  **Do not touch this.**  Use the `timeout` value passed to your methods instead.
 
 #### Slot MESSAGE-START
 
-* Allocation: INSTANCE
+* Allocation: `:INSTANCE`
 * Type: `(OR NULL (INTEGER 0))`
+* Initform: `NIL`
 
 The (internal-real) timestamp of when the current GGP message was received.  **Do not touch this.**  Use the `timeout` value passed to your methods instead.
 
 #### Slot CURRENT-MATCH
 
-* Allocation: INSTANCE
+* Allocation: `:INSTANCE`
+* Initform: `NIL`
 
 The ID of the current match the player is playing, or `nil` if it is waiting.  **Do not touch this.**
 
 #### Slot SERVER
 
-* Allocation: INSTANCE
+* Allocation: `:INSTANCE`
 
 The Clack server object of the player.  **Do not touch this.**  Use `start-player` and `kill-player` to start/stop the server safely.
 
