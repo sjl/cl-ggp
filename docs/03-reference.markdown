@@ -10,15 +10,15 @@ don't touch it.
 
 [TOC]
 
-## Package GGP
+## Package `GGP`
 
 The main GGP package.
 
-### GGP-PLAYER (class)
+### `GGP-PLAYER` (class)
 
 The base class for a GGP player.  Custom players should extend this.
 
-#### Slot NAME
+#### Slot `NAME`
 
 * Allocation: `:INSTANCE`
 * Type: `STRING`
@@ -28,7 +28,7 @@ The base class for a GGP player.  Custom players should extend this.
 
 The name of the player.
 
-#### Slot PORT
+#### Slot `PORT`
 
 * Allocation: `:INSTANCE`
 * Type: `(INTEGER 0)`
@@ -38,7 +38,7 @@ The name of the player.
 
 The port the HTTP server should listen on.
 
-#### Slot MATCH-ROLES
+#### Slot `MATCH-ROLES`
 
 * Allocation: `:INSTANCE`
 * Type: `(OR NULL LIST)`
@@ -47,7 +47,7 @@ The port the HTTP server should listen on.
 
 A list of the roles for the current match.  Feel free to read and use this if you like.  **Do not modify this.**
 
-#### Slot START-CLOCK
+#### Slot `START-CLOCK`
 
 * Allocation: `:INSTANCE`
 * Type: `(OR NULL (INTEGER 1))`
@@ -55,7 +55,7 @@ A list of the roles for the current match.  Feel free to read and use this if yo
 
 The start clock for the current game.  **Do not touch this.**  Use the `timeout` value passed to your methods instead.
 
-#### Slot PLAY-CLOCK
+#### Slot `PLAY-CLOCK`
 
 * Allocation: `:INSTANCE`
 * Type: `(OR NULL (INTEGER 1))`
@@ -63,7 +63,7 @@ The start clock for the current game.  **Do not touch this.**  Use the `timeout`
 
 The play clock for the current game.  **Do not touch this.**  Use the `timeout` value passed to your methods instead.
 
-#### Slot MESSAGE-START
+#### Slot `MESSAGE-START`
 
 * Allocation: `:INSTANCE`
 * Type: `(OR NULL (INTEGER 0))`
@@ -71,20 +71,20 @@ The play clock for the current game.  **Do not touch this.**  Use the `timeout` 
 
 The (internal-real) timestamp of when the current GGP message was received.  **Do not touch this.**  Use the `timeout` value passed to your methods instead.
 
-#### Slot CURRENT-MATCH
+#### Slot `CURRENT-MATCH`
 
 * Allocation: `:INSTANCE`
 * Initform: `NIL`
 
 The ID of the current match the player is playing, or `nil` if it is waiting.  **Do not touch this.**
 
-#### Slot SERVER
+#### Slot `SERVER`
 
 * Allocation: `:INSTANCE`
 
 The Clack server object of the player.  **Do not touch this.**  Use `start-player` and `kill-player` to start/stop the server safely.
 
-### KILL-PLAYER (function)
+### `KILL-PLAYER` (function)
 
     (KILL-PLAYER PLAYER)
 
@@ -95,7 +95,7 @@ Kill the HTTP server for the given player.
 
   
 
-### PLAYER-SELECT-MOVE (generic function)
+### `PLAYER-SELECT-MOVE` (generic function)
 
     (PLAYER-SELECT-MOVE PLAYER TIMEOUT)
 
@@ -112,7 +112,7 @@ Called when it's time for the player to select a move to play.
 
   
 
-### PLAYER-START-GAME (generic function)
+### `PLAYER-START-GAME` (generic function)
 
     (PLAYER-START-GAME PLAYER RULES ROLE TIMEOUT)
 
@@ -129,7 +129,7 @@ Called when the game is started.
 
   
 
-### PLAYER-STOP-GAME (generic function)
+### `PLAYER-STOP-GAME` (generic function)
 
     (PLAYER-STOP-GAME PLAYER)
 
@@ -140,7 +140,7 @@ Called when the game is stopped.
 
   
 
-### PLAYER-UPDATE-GAME (generic function)
+### `PLAYER-UPDATE-GAME` (generic function)
 
     (PLAYER-UPDATE-GAME PLAYER MOVES)
 
@@ -151,13 +151,13 @@ Called after all players have made their moves.
 
   
 
-### START-PLAYER (function)
+### `START-PLAYER` (function)
 
     (START-PLAYER PLAYER)
 
 Start the HTTP server for the given player.
 
-## Package GGP-RULES
+## Package `GGP-RULES`
 
 Symbol storage package.
 
