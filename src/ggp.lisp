@@ -25,7 +25,18 @@
     ggp-rules::done
     ggp-rules::what
 
+    ggp-rules::<=
     ggp-rules::role
+    ggp-rules::init
+    ggp-rules::legal
+    ggp-rules::terminal
+    ggp-rules::goal
+    ggp-rules::does
+    ggp-rules::next
+    ggp-rules::true
+    ggp-rules::or
+    ggp-rules::distinct
+    ggp-rules::not
     ))
 
 
@@ -276,4 +287,8 @@
   is in the middle of a game.  Be careful.
 
   "
-  (clack.handler:stop (slot-value player 'server)))
+  (clack.handler:stop (slot-value player 'server))
+  (setf (slot-value player 'current-match) nil)
+  (setf (slot-value player 'match-roles) nil)
+  (clear-rules-package)
+  )

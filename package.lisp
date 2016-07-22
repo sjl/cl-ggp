@@ -18,7 +18,6 @@
   )
 
 (defpackage #:ggp-rules
-  (:use #:cl)
   (:import-from #:cl #:nil) ; fuckin lol
   (:documentation
    "Symbol storage package.
