@@ -272,11 +272,16 @@
 
 
 ;;;; Spinup/spindown
-(defun start-player (player)
-  "Start the HTTP server for the given player."
+(defun start-player (player &key (server :hunchentoot))
+  "Start the HTTP server for the given player.
+
+  The `:server` option will be passed along to Clack.
+
+  "
   (let* ((player-handler #'(lambda (env) (app player env)))
          (server (clack:clackup player-handler
-                                :port (player-port player))))
+                                :port (player-port player)
+                                :server server)))
     (setf (slot-value player 'server) server)
     player))
 
@@ -290,5 +295,4 @@
   (clack.handler:stop (slot-value player 'server))
   (setf (slot-value player 'current-match) nil)
   (setf (slot-value player 'match-roles) nil)
-  (clear-rules-package)
-  )
+  (clear-rules-package))

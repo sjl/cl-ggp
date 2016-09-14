@@ -5,6 +5,11 @@ Here's the list of changes in each released version.
 
 [TOC]
 
+Pending
+-------
+
+* `start-player` now takes a `:server` option which it passed along to Clack.
+
 v0.0.1
 ------
 

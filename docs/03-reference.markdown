@@ -153,9 +153,13 @@ Called after all players have made their moves.
 
 ### `START-PLAYER` (function)
 
-    (START-PLAYER PLAYER)
+    (START-PLAYER PLAYER &KEY (SERVER :HUNCHENTOOT))
 
 Start the HTTP server for the given player.
+
+  The `:server` option will be passed along to Clack.
+
+  
 
 ## Package `GGP-RULES`
 
