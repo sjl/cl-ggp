@@ -151,13 +151,25 @@ Called after all players have made their moves.
 
   
 
+### `PLAYER-UPDATE-GAME-II` (generic function)
+
+    (PLAYER-UPDATE-GAME-II PLAYER MOVE PERCEPTS)
+
+Called after all players have made their moves in a GDL-II game.
+
+  `move` will be the move you played last turn.
+
+  `percepts` are all the percepts you see for the round.
+
+  
+
 ### `START-PLAYER` (function)
 
-    (START-PLAYER PLAYER &KEY (SERVER :HUNCHENTOOT))
+    (START-PLAYER PLAYER &KEY (SERVER :HUNCHENTOOT) (USE-THREAD T))
 
 Start the HTTP server for the given player.
 
-  The `:server` option will be passed along to Clack.
+  The `:server` and `:use-thread` options will be passed along to Clack.
 
   
 

@@ -1,6 +1,7 @@
 (in-package #:ggp)
 (named-readtables:in-readtable :fare-quasiquote)
 
+
 (defparameter *debug*
   t)
 
@@ -37,6 +38,10 @@
     ggp-rules::or
     ggp-rules::distinct
     ggp-rules::not
+
+    ;; GDL-II
+    ggp-rules::sees
+    ggp-rules::random
     ))
 
 
@@ -101,6 +106,16 @@
 
   "))
 
+(defgeneric player-update-game-ii (player move percepts)
+  (:documentation
+    "Called after all players have made their moves in a GDL-II game.
+
+  `move` will be the move you played last turn.
+
+  `percepts` are all the percepts you see for the round.
+
+  "))
+
 (defgeneric player-select-move (player timeout)
   (:documentation "Called when it's time for the player to select a move to play.
 
@@ -128,6 +143,9 @@
   nil)
 
 (defmethod player-update-game ((player ggp-player) moves)
+  nil)
+
+(defmethod player-update-game-ii ((player ggp-player) move percepts)
   nil)
 
 (defmethod player-select-move ((player ggp-player) timeout)
@@ -174,7 +192,8 @@
 ;;;; Clack Horseshit
 (defun l (&rest args)
   (when *debug*
-    (apply #'format *debug-io* args)))
+    (let ((*package* *rules-package*))
+      (apply #'format *debug-io* args))))
 
 (defun resp (body &key (code 200) (content-type "text/acl"))
   (list code
@@ -199,13 +218,14 @@
     (ggp-rules::species ggp-rules::alien)))
 
 (defun handle-start (player match-id role rules start-clock play-clock)
-  (setf (slot-value player 'current-match) match-id)
-  (setf (slot-value player 'start-clock) start-clock)
-  (setf (slot-value player 'play-clock) play-clock)
-  (setf (slot-value player 'match-roles) (find-roles rules))
+  (setf (slot-value player 'current-match) match-id
+        (slot-value player 'start-clock) start-clock
+        (slot-value player 'play-clock) play-clock
+        (slot-value player 'match-roles) (find-roles rules))
   (l "Starting match ~S as ~S~%" match-id role)
   (player-start-game player rules role (calculate-timeout player start-clock))
   'ggp-rules::ready)
+
 
 (defun handle-play (player match-id moves)
   (declare (ignore match-id))
@@ -214,13 +234,32 @@
   (player-select-move player
                       (calculate-timeout player (slot-value player 'play-clock))))
 
+(defun handle-play-ii (player match-id turn move percepts)
+  (declare (ignore match-id))
+  (l "Handling GDL-II play request (turn ~D)~%    with move: ~S~%    and percepts: ~S~%"
+     turn move percepts)
+  (player-update-game-ii player move percepts)
+  (player-select-move player
+                      (calculate-timeout player (slot-value player 'play-clock))))
+
+
+(defun cleanup-game (player)
+  (player-stop-game player)
+  (setf (slot-value player 'match-roles) nil)
+  (clear-rules-package)
+  (setf (slot-value player 'current-match) nil))
+
 (defun handle-stop (player match-id moves)
   (l "Handling stop request for ~S~%" match-id)
   (player-update-game player (zip-moves player moves))
-  (player-stop-game player)
-  (setf (slot-value player 'current-match) nil)
-  (setf (slot-value player 'match-roles) nil)
-  (clear-rules-package)
+  (cleanup-game player)
+  'ggp-rules::done)
+
+(defun handle-stop-ii (player match-id turn move percepts)
+  (declare (ignore turn))
+  (l "Handling GDL-II stop request for ~S~%" match-id)
+  (player-update-game-ii player move percepts)
+  (cleanup-game player)
   'ggp-rules::done)
 
 
@@ -233,8 +272,14 @@
     (`(ggp-rules::play ,match-id ,moves)
      (handle-play player match-id moves))
 
+    (`(ggp-rules::play ,match-id ,turn ,move ,percepts)
+     (handle-play-ii player match-id turn move percepts))
+
     (`(ggp-rules::stop ,match-id ,moves)
      (handle-stop player match-id moves))
+
+    (`(ggp-rules::stop ,match-id ,turn ,move ,percepts)
+     (handle-stop-ii player match-id turn move percepts))
 
     (`(ggp-rules::start ,match-id ,role ,rules ,start-clock ,play-clock)
      (handle-start player match-id role rules start-clock play-clock))
@@ -258,8 +303,8 @@
              (should-log (should-log-p request)))
         (when should-log
           (l "~%~%Got a request ====================================~%")
-          (l "~S~%" body)
-          (l "~A~%" (render-to-string request))
+          ; (l "~S~%" body)
+          (l "~A~%" request)
           (l "==================================================~%"))
         (let* ((response (route player request))
                (rendered-response (render-to-string response)))
@@ -272,16 +317,17 @@
 
 
 ;;;; Spinup/spindown
-(defun start-player (player &key (server :hunchentoot))
+(defun start-player (player &key (server :hunchentoot) (use-thread t))
   "Start the HTTP server for the given player.
 
-  The `:server` option will be passed along to Clack.
+  The `:server` and `:use-thread` options will be passed along to Clack.
 
   "
   (let* ((player-handler #'(lambda (env) (app player env)))
          (server (clack:clackup player-handler
                                 :port (player-port player)
-                                :server server)))
+                                :server server
+                                :use-thread use-thread)))
     (setf (slot-value player 'server) server)
     player))
 

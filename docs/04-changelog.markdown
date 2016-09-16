@@ -8,7 +8,9 @@ Here's the list of changes in each released version.
 Pending
 -------
 
-* `start-player` now takes a `:server` option which it passed along to Clack.
+* `start-player` now takes `:server` and `:use-thread` options which it passes
+  along to Clack.
+* Added rudimentary support for writing GDL-II players.
 
 v0.0.1
 ------

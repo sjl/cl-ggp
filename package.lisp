@@ -6,6 +6,7 @@
 
     :player-start-game
     :player-update-game
+    :player-update-game-ii ; lol
     :player-select-move
     :player-stop-game
 
