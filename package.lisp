@@ -1,6 +1,6 @@
-(defpackage #:ggp
-  (:use #:cl #:optima)
-  (:import-from #:optima #:match)
+(defpackage :ggp
+  (:use :cl :optima)
+  (:import-from :optima :match)
   (:export
     :ggp-player
 
@@ -14,12 +14,15 @@
     :player-port
 
     :start-player
-    :kill-player)
+    :kill-player
+
+    :read-gdl-from-file
+    )
   (:documentation "The main GGP package.")
   )
 
-(defpackage #:ggp-rules
-  (:import-from #:cl #:nil) ; fuckin lol
+(defpackage :ggp-rules
+  (:import-from :cl :nil) ; fuckin lol
   (:documentation
    "Symbol storage package.
 

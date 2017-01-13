@@ -45,7 +45,7 @@
     ))
 
 
-;;;; GGP Player
+;;;; GGP Player ---------------------------------------------------------------
 (defclass ggp-player ()
   ((name
      :initarg :name
@@ -155,7 +155,7 @@
   nil)
 
 
-;;;; Utils
+;;;; Utils --------------------------------------------------------------------
 (defun safe-read-from-string (s)
   ;; what could go wrong
   (let ((*read-eval* nil)
@@ -188,8 +188,18 @@
           (slot-value player 'match-roles)
           moves))
 
+(defun read-gdl-from-file (filename)
+  "Read GDL from `filename`"
+  (let ((*package* *rules-package*))
+    (with-open-file (stream filename)
+      (loop
+        :with done = (gensym)
+        :for form = (read stream nil done)
+        :while (not (eq form done))
+        :collect form))))
 
-;;;; Clack Horseshit
+
+;;;; Clack Horseshit ----------------------------------------------------------
 (defun l (&rest args)
   (when *debug*
     (let ((*package* *rules-package*))
@@ -209,7 +219,7 @@
     (flex:octets-to-string body)))
 
 
-;;;; GGP Protocol
+;;;; GGP Protocol -------------------------------------------------------------
 (defun handle-info (player)
   `((ggp-rules::name ,(slot-value player 'name))
     (ggp-rules::status ,(if (slot-value player 'current-match)
@@ -289,7 +299,7 @@
       'ggp-rules::what)))
 
 
-;;;; Boilerplate
+;;;; Boilerplate --------------------------------------------------------------
 (defun should-log-p (request)
   (match request
     (`(ggp-rules::info) nil)
@@ -316,7 +326,7 @@
     (setf (slot-value player 'message-start) nil)))
 
 
-;;;; Spinup/spindown
+;;;; Spinup/spindown ----------------------------------------------------------
 (defun start-player (player &key (server :hunchentoot) (use-thread t))
   "Start the HTTP server for the given player.
 
