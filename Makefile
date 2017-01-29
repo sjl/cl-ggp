@@ -1,19 +1,19 @@
 .PHONY: pubdocs
 
-sourcefiles = $(shell ffind --full-path --dir src --literal .lisp)
+sourcefiles = $(shell ffind --full-path --literal .lisp)
 docfiles = $(shell ls docs/*.markdown)
-apidoc = docs/03-reference.markdown
+apidocs = $(shell ls docs/*reference*.markdown)
 
 # src/utils.lisp: src/make-utilities.lisp
 # 	cd src && sbcl --noinform --load make-utilities.lisp  --eval '(quit)'
 
-$(apidoc): $(sourcefiles) docs/api.lisp package.lisp
+$(apidocs): $(sourcefiles)
 	sbcl --noinform --load docs/api.lisp  --eval '(quit)'
 
-docs: docs/build/index.html
-
-docs/build/index.html: $(docfiles) $(apidoc) docs/title
+docs/build/index.html: $(docfiles) $(apidocs) docs/title
 	cd docs && ~/.virtualenvs/d/bin/d
+
+docs: docs/build/index.html
 
 pubdocs: docs
 	hg -R ~/src/sjl.bitbucket.org pull -u

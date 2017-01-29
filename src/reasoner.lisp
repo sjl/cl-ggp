@@ -5,8 +5,11 @@
   (and (consp form)
        (eq (car form) 'ggp-rules::<=)))
 
+(defun dedupe (things)
+  (remove-duplicates things :test #'equal))
+
 (defun normalize-state (state)
-  (remove-duplicates state :test #'equal))
+  (dedupe state))
 
 
 ;;;; Reasoner -----------------------------------------------------------------
@@ -39,6 +42,7 @@
   ;; todo this
   rules)
 
+
 (defun load-rule (rule)
   (if (gdl-rule-p rule)
     (apply #'invoke-rule t (rest rule))
@@ -51,6 +55,14 @@
 
 
 (defun make-reasoner (rules)
+  "Create and return a reasoner for the given GDL `rules`.
+
+  `rules` should be a list of GDL rules with the symbols interned into the
+  appropriate packages.  `ggp:player-start-game` will give you this, or you can
+  use `ggp:read-gdl-from-file` to get them without a player if you want to just
+  poke at the reasoner.
+
+  "
   (let ((reasoner (make-instance 'reasoner)))
     (load-rules-into-reasoner reasoner rules)
     reasoner))
@@ -94,11 +106,18 @@
 
 
 (defun initial-state (reasoner)
+  "Return the initial state of `reasoner`."
   (normalize-state
     (query-for (reasoner-database reasoner) ?what
                (ggp-rules::init ?what))))
 
 (defun next-state (reasoner state moves)
+  "Compute and return the successor to `state`, assuming `moves` were made.
+
+  `moves` should be an alist of `(role . move)` pairs, which is what
+  `ggp:player-update-game` will give you.
+
+  "
   (with-database (reasoner-database reasoner)
     (ensure-state reasoner state)
     (ensure-moves reasoner moves)
@@ -107,12 +126,54 @@
 
 
 (defun legal-moves (reasoner state)
+  "Return an alist of `(role . move)` for all legal moves in `state`."
   (with-database (reasoner-database reasoner)
     (ensure-state reasoner state)
-    (query-all t (ggp-rules::legal ?role ?action))))
+    (dedupe (loop :for move :in (query-all t (ggp-rules::legal ?role ?action))
+                  :collect (cons (getf move '?role)
+                                 (getf move '?action))))))
 
 (defun legal-moves-for (reasoner state role)
-  (loop :for move :in (legal-moves reasoner state)
-        :when (eq (getf move '?role) role)
-        :collect (getf move '?action)))
+  "Return a list of legal moves for `role` in `state`.
+
+  `ggp:player-select-move` must return exactly one of the items in this list.
+
+  "
+  (with-database (reasoner-database reasoner)
+    (ensure-state reasoner state)
+    (dedupe (invoke-query-for t '?action `(ggp-rules::legal ,role ?action)))))
+
+
+(defun goal-values (reasoner state)
+  "Return an alist of `(role . value)` pairs of goal values for `state`.
+
+  Note that the GDL spec only requires that such values have meaning in terminal
+  states.  Game authors sometimes add goal values to nonterminal states, but
+  this is probably not something you should rely on.
+
+  "
+  (with-database (reasoner-database reasoner)
+    (ensure-state reasoner state)
+    (dedupe (loop :for goal :in (query-all t (ggp-rules::goal ?role ?value))
+                  :collect (cons (getf goal '?role)
+                                 (getf goal '?value))))))
+
+(defun goal-value-for (reasoner state role)
+  "Return the goal value for `role` in `state`, or `nil` if none exists.
+
+  Note that the GDL spec only requires that such values have meaning in terminal
+  states.  Game authors sometimes add goal values to nonterminal states, but
+  this is probably not something you should rely on.
+
+  "
+  (with-database (reasoner-database reasoner)
+    (ensure-state reasoner state)
+    (car (invoke-query-for t '?value `(ggp-rules::goal ,role ?value)))))
+
+
+(defun terminalp (reasoner state)
+  "Return whether `state` is terminal."
+  (with-database (reasoner-database reasoner)
+    (ensure-state reasoner state)
+    (prove t ggp-rules::terminal)))
 

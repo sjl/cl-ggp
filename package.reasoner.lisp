@@ -7,6 +7,6 @@
     :terminalp
     :legal-moves-for
     :goal-value-for)
-  (:documentation "The package containing a simple GGP reasoner."))
+  (:documentation "This package contains a simple GGP reasoner.  It can be useful as a starting point for writing general game players."))
 
 
