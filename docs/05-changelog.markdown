@@ -11,6 +11,8 @@ Pending
 * `start-player` now takes `:server` and `:use-thread` options which it passes
   along to Clack.
 * Added rudimentary support for writing GDL-II players.
+* Added `cl-ggp.reasoner` to reduce the friction for new folks wanting to get
+  started with general game playing.
 
 v0.0.1
 ------
