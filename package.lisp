@@ -18,8 +18,7 @@
 
     :read-gdl-from-file
     )
-  (:documentation "The main GGP package.")
-  )
+  (:documentation "The main GGP package."))
 
 (defpackage :ggp-rules
   (:import-from :cl :nil) ; fuckin lol

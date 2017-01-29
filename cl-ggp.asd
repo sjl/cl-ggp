@@ -1,4 +1,4 @@
-(asdf:defsystem #:cl-ggp
+(asdf:defsystem :cl-ggp
   :name "ggp"
   :description "A framework for writing General Game Playing clients."
 

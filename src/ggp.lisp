@@ -1,4 +1,4 @@
-(in-package #:ggp)
+(in-package :ggp)
 (named-readtables:in-readtable :fare-quasiquote)
 
 
