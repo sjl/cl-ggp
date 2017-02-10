@@ -151,8 +151,8 @@ package the symbols get interned into.
 
 `cl-ggp` interns all GDL symbols into a separate package called `GGP-RULES` to
 prevent polluting other packages.  It also clears this package between matches
-(except for a few special symbols that survive the clearing) to prevent building
-up mountains of garbage symbols from building up over time, especially when GDL
+(except for a few special symbols that survive the clearing) to prevent
+mountains of garbage symbols from building up over time, especially when GDL
 scrambing is enabled on the server.
 
 This means that when your player's methods get symbols in their input (i.e. in
