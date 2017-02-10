@@ -16,8 +16,7 @@
     :start-player
     :kill-player
 
-    :read-gdl-from-file
-    )
+    :read-gdl-from-file)
   (:documentation "The main GGP package."))
 
 (defpackage :ggp-rules

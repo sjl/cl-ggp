@@ -1,6 +1,6 @@
 # Reasoner API Reference
 
-cl-ggp includes a simple Prolog-based reasoner you can use as a starting point when writing general game players in the `cl-ggp.reasoner` system.
+cl-ggp includes a simple Prolog-based reasoner you can use as a starting point when writing general game players in the `ggp.reasoner` system.
 
   [TOC]
 

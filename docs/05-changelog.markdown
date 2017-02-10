@@ -5,8 +5,8 @@ Here's the list of changes in each released version.
 
 [TOC]
 
-Pending
--------
+v1.0.0
+------
 
 * `start-player` now takes `:server` and `:use-thread` options which it passes
   along to Clack.

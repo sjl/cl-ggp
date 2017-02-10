@@ -19,7 +19,7 @@ don't touch it.
   :cl-ggp.reasoner
   #p"docs/04-reference-reasoner.markdown"
   (list "GGP.REASONER")
-  "cl-ggp includes a simple Prolog-based reasoner you can use as a starting point when writing general game players in the `cl-ggp.reasoner` system.
+  "cl-ggp includes a simple Prolog-based reasoner you can use as a starting point when writing general game players in the `ggp.reasoner` system.
 
   "
   :title "Reasoner API Reference")
