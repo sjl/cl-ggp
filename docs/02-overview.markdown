@@ -180,7 +180,7 @@ You can make a reasoner for a set of GDL rules (e.g. the rules given to you by
 `player-start-game`) with `(make-reasoner rules)`.
 
 Once you've got a reasoner you can ask it for the initial state of the game with
-`(initial-state reasoner)`.  This will give you back a state object -- it's
+`(initial-state reasoner)`.  This will give you back a state object — it's
 currently just a list, but this may change in the future, so you should just
 treat it as an opaque object.
 
