@@ -18,7 +18,7 @@ when writing players.
 [GGP]: http://www.ggp.org/
 [Temperance]: https://sjl.bitbucket.io/temperance/
 
-* **License:** MIT/X11
+* **License:** MIT
 * **Documentation:** <https://sjl.bitbucket.io/cl-ggp/>
 * **Mercurial:** <https://bitbucket.org/sjl/cl-ggp/>
 * **Git:** <https://github.com/sjl/cl-ggp/>
