@@ -60,6 +60,12 @@ Compute and return the successor to `state`, assuming `moves` were made.
 
   
 
+### `ROLES` (function)
+
+    (ROLES REASONER)
+
+Return a fresh list of all the roles of `reasoner`.
+
 ### `TERMINALP` (function)
 
     (TERMINALP REASONER STATE)

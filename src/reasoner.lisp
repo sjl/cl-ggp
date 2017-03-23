@@ -12,6 +12,40 @@
   (dedupe state))
 
 
+;;;; GDL Cleaning -------------------------------------------------------------
+;;; Some GDL authors use (or x y) and (and x y) in their game descriptions, even
+;;; though it's not part of the GDL "spec".  Worse still, some use n-ary
+;;; versions of those predicates, because fuck you.  So we'll do a quick pass
+;;; over the GDL to clean up these bugs.
+
+(defun clean-or (gdl)
+  (destructuring-bind (or . arguments)
+      gdl
+    (case (length arguments)
+      (1 (first arguments))
+      (2 gdl)
+      (t (list or (first arguments)
+               (clean-or (cons or (rest arguments))))))))
+
+(defun clean-and (gdl)
+  (destructuring-bind (and . arguments)
+      gdl
+    (case (length arguments)
+      (1 (first arguments))
+      (2 gdl)
+      (t (list and (first arguments)
+               (clean-and (cons and (rest arguments))))))))
+
+(defun clean-gdl (gdl)
+  (if (consp gdl)
+    (case (car gdl)
+      (ggp-rules::or (clean-or gdl))
+      (ggp-rules::and (clean-and gdl))
+      (t (cons (clean-gdl (car gdl))
+               (clean-gdl (cdr gdl)))))
+    gdl))
+
+
 ;;;; Reasoner -----------------------------------------------------------------
 (defun load-gdl-preamble (db)
   (push-logic-frame-with db
@@ -38,11 +72,6 @@
    (current-moves :initform nil :accessor reasoner-moves)))
 
 
-(defun clean-gdl (rules)
-  ;; todo this
-  rules)
-
-
 (defun load-rule (rule)
   (if (gdl-rule-p rule)
     (apply #'invoke-rule t (rest rule))
@@ -51,7 +80,7 @@
 (defun load-rules-into-reasoner (reasoner rules)
   (with-database (reasoner-database reasoner)
     (push-logic-frame-with t
-      (map nil #'load-rule rules))))
+      (map nil #'load-rule (clean-gdl rules)))))
 
 
 (defun make-reasoner (rules)
@@ -169,6 +198,13 @@
   (with-database (reasoner-database reasoner)
     (ensure-state reasoner state)
     (car (invoke-query-for t '?value `(ggp-rules::goal ,role ?value)))))
+
+
+(defun roles (reasoner)
+  "Return a fresh list of all the roles of `reasoner`."
+  (remove-duplicates
+    (query-for (reasoner-database reasoner) ?who
+               (ggp-rules::role ?who))))
 
 
 (defun terminalp (reasoner state)
