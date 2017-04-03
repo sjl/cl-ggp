@@ -6,9 +6,7 @@
 (defun random-elt (sequence)
   (elt sequence (random (length sequence))))
 
-
-;;;; Simulations --------------------------------------------------------------
-(defun random-move (reasoner state)
+(defun random-joint-move (reasoner state)
   (mapcar (lambda (role)
             (cons role (random-elt
                          (ggp.reasoner:legal-moves-for reasoner state role))))
@@ -17,11 +15,13 @@
 (defun random-playout-value (reasoner role state &optional our-move)
   (if (ggp.reasoner:terminalp reasoner state)
     (ggp.reasoner:goal-value-for reasoner state role)
-    (let ((move (random-move reasoner state)))
+    (let ((joint-move (random-joint-move reasoner state)))
       (when our-move
-        (setf (cdr (assoc role move)) our-move))
-      (random-playout-value reasoner role
-                            (ggp.reasoner:next-state reasoner state move)))))
+        (setf (cdr (assoc role joint-move)) our-move))
+      (random-playout-value
+        reasoner
+        role
+        (ggp.reasoner:next-state reasoner state joint-move)))))
 
 
 ;;;; Player -------------------------------------------------------------------
@@ -32,6 +32,7 @@
 
 (defmethod ggp:player-start-game
     ((player monte-carlo-player) rules role deadline)
+  (declare (ignore deadline))
   (setf (p-role player) role
         (p-reasoner player) (ggp.reasoner:make-reasoner rules)))
 
@@ -45,13 +46,34 @@
                                    moves))))
 
 
-(defun conservative-deadline (deadline &optional (seconds-of-breathing-room 1))
-  (- deadline (* seconds-of-breathing-room internal-time-units-per-second)))
+(defun conservative-deadline (deadline seconds-of-breathing-room)
+  (- deadline (* seconds-of-breathing-room
+                 internal-time-units-per-second)))
 
 (defmethod ggp:player-select-move
     ((player monte-carlo-player) deadline)
   (loop
-    :with conservative-deadline = (conservative-deadline deadline)
+    :with conservative-deadline = (conservative-deadline deadline 2)
+    :with reasoner = (p-reasoner player)
+    :with state = (p-current-state player)
+    :with role = (p-role player)
+    :with our-moves = (ggp.reasoner:legal-moves-for reasoner state role)
+    :with scores = (mapcar (lambda (move) (cons move 0))
+                           our-moves)
+    ; '(((mark 1 1) . 0)
+    ;   ((mark 1 2) . 0)
+    ;   ...)
+    :until (>= (get-internal-real-time) conservative-deadline)
+    :do (dolist (move our-moves)
+          (incf (cdr (assoc move scores))
+                (random-playout-value reasoner role state move)))
+    :finally (return (car (first (sort scores #'> :key #'cdr))))))
+
+
+(defmethod ggp:player-select-move
+    ((player monte-carlo-player) deadline)
+  (loop
+    :with conservative-deadline = (conservative-deadline deadline 2)
     :with reasoner = (p-reasoner player)
     :with state = (p-current-state player)
     :with role = (p-role player)
@@ -60,6 +82,7 @@
                            our-moves)
     :for count :from 1
     :until (>= (get-internal-real-time) conservative-deadline)
+    :when (= 1 (length our-moves)) :do (return (first our-moves))
     :do (dolist (move our-moves)
           (incf (cdr (assoc move scores))
                 (random-playout-value reasoner role state move)))
@@ -73,6 +96,7 @@
                (finish-output)
                (return (car (first (sort scores #'> :key #'cdr)))))))
 
+
 (defmethod ggp:player-stop-game
     ((player monte-carlo-player))
   (setf (p-current-state player) nil
@@ -83,7 +107,7 @@
 ;;;; Scratch ------------------------------------------------------------------
 (defvar *monte-carlo-player*
   (make-instance 'monte-carlo-player
-    :name "MonteCarloPlayer"
+    :name "ELSMonteCarloPlayer"
     :port 4000))
 
 ;; (ggp:start-player *monte-carlo-player*)

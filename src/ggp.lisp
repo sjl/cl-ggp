@@ -14,6 +14,7 @@
     ggp-rules::play
     ggp-rules::stop
     ggp-rules::start
+    ggp-rules::abort
 
     ggp-rules::name
     ggp-rules::status
@@ -273,6 +274,12 @@
   'ggp-rules::done)
 
 
+(defun handle-abort (player match-id)
+  (l "Handling abort request for ~S~%" match-id)
+  (cleanup-game player)
+  'ggp-rules::done)
+
+
 (defun route (player request)
   "Route the request to the appropriate player function."
   (match request
@@ -287,6 +294,9 @@
 
     (`(ggp-rules::stop ,match-id ,moves)
      (handle-stop player match-id moves))
+
+    (`(ggp-rules::abort ,match-id)
+     (handle-abort player match-id))
 
     (`(ggp-rules::stop ,match-id ,turn ,move ,percepts)
      (handle-stop-ii player match-id turn move percepts))
