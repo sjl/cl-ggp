@@ -77,6 +77,9 @@
      :type (or null (integer 0))
      :initform nil
      :documentation "The (internal-real) timestamp of when the current GGP message was received.  **Do not touch this.**  Use the `timeout` value passed to your methods instead.")
+   (request-lock
+     :initform (bt:make-lock "ggp-player request lock")
+     :documentation "A lock used to prevent concurrent GGP request processing.  **Do not touch this.**")
    (current-match
      :initform nil
      :documentation "The ID of the current match the player is playing, or `nil` if it is waiting.  **Do not touch this.**")
@@ -316,24 +319,25 @@
     (_ t)))
 
 (defun app (player env)
-  (setf (slot-value player 'message-start) (get-internal-real-time))
-  (unwind-protect
-      (let* ((body (get-body env))
-             (request (safe-read-from-string body))
-             (should-log (should-log-p request)))
-        (when should-log
-          (l "~%~%Got a request ====================================~%")
-          ; (l "~S~%" body)
-          (l "~A~%" request)
-          (l "==================================================~%"))
-        (let* ((response (route player request))
-               (rendered-response (render-to-string response)))
+  (bt:with-lock-held ((slot-value player 'request-lock))
+    (setf (slot-value player 'message-start) (get-internal-real-time))
+    (unwind-protect
+        (let* ((body (get-body env))
+               (request (safe-read-from-string body))
+               (should-log (should-log-p request)))
           (when should-log
-            (l "==================================================~%")
-            (l "Responding with:~%~A~%" rendered-response)
+            (l "~%~%Got a request ====================================~%")
+            ; (l "~S~%" body)
+            (l "~A~%" request)
             (l "==================================================~%"))
-          (resp rendered-response)))
-    (setf (slot-value player 'message-start) nil)))
+          (let* ((response (route player request))
+                 (rendered-response (render-to-string response)))
+            (when should-log
+              (l "==================================================~%")
+              (l "Responding with:~%~A~%" rendered-response)
+              (l "==================================================~%"))
+            (resp rendered-response)))
+      (setf (slot-value player 'message-start) nil))))
 
 
 ;;;; Spinup/spindown ----------------------------------------------------------

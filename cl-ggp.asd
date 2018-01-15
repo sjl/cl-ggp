@@ -7,11 +7,16 @@
   :license "MIT"
   :version "1.0.0"
 
-  :depends-on (:clack
+  :depends-on (
+
+               :bordeaux-threads
+               :clack
+               :fare-quasiquote-optima
+               :fare-quasiquote-readtable
                :flexi-streams
                :optima
-               :fare-quasiquote-optima
-               :fare-quasiquote-readtable)
+
+               )
 
   :serial t
   :components ((:file "package")
