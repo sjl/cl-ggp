@@ -1,4 +1,4 @@
-(ql:quickload "cl-d-api")
+(ql:quickload '(:cl-ggp :cl-ggp.reasoner "cl-d-api"))
 
 (d-api:generate-documentation
   :cl-ggp
