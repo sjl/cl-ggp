@@ -16,9 +16,9 @@ The `cl-ggp.reasoner` system contains a simple Prolog-based reasoner using the
 when writing players.
 
 [GGP]: http://www.ggp.org/
-[Temperance]: https://sjl.bitbucket.io/temperance/
+[Temperance]: https://docs.stevelosh.com/temperance/
 
 * **License:** MIT
-* **Documentation:** <https://sjl.bitbucket.io/cl-ggp/>
-* **Mercurial:** <https://bitbucket.org/sjl/cl-ggp/>
+* **Documentation:** <https://docs.stevelosh.com/cl-ggp/>
+* **Mercurial:** <https://hg.sr.ht/~sjl/cl-ggp/>
 * **Git:** <https://github.com/sjl/cl-ggp/>

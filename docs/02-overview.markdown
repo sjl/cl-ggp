@@ -170,7 +170,7 @@ Reasoning
 The `cl-ggp.reasoner` system contains a Prolog-based GDL reasoner based on the
 [Temperance][] logic programming library.
 
-[Temperance]: https://sjl.bitbucket.io/temperance/
+[Temperance]: https://docs.stevelosh.com/temperance/
 
 It's useful as a starting point if you just want to get a bot up and running
 quickly.  If you want more speed or control over the reasoning process you'll
