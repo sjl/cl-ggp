@@ -13,5 +13,5 @@ when writing players.
 
 * **License:** MIT
 * **Documentation:** <https://docs.stevelosh.com/cl-ggp/>
-* **Mercurial:** <https://hg.sr.ht/~sjl/cl-ggp/>
+* **Mercurial:** <https://hg.stevelosh.com/cl-ggp/>
 * **Git:** <https://github.com/sjl/cl-ggp/>
